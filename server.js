@@ -48,6 +48,7 @@ app.get('/distritos',(req,res)=>{
     }
   });
 });
+/* estados */
 app.get('/estados', (req, res) => {
   let sql = 'CALL spListarestados()';
   db.query(sql,(err,results)=> {
@@ -58,6 +59,7 @@ app.get('/estados', (req, res) => {
     }
 });
 });
+/* clientes */
 app.get('/clientes', (req, res) => {
   let clientes = [];
   let clienteAct = null;
