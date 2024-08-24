@@ -59,6 +59,7 @@ app.get('/estados', (req, res) => {
     }
 });
 });
+/* clientes */
 app.get('/clientes', (req, res) => {
   let clientes = [];
   let clienteAct = null;
