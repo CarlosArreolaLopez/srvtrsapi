@@ -18,7 +18,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-/**/
+/********************/
 // Configuración de MySQL
 const db = mysql.createConnection({
   host: '80.211.42.157',
