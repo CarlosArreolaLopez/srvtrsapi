@@ -36,10 +36,14 @@ db.connect((err) => {
   console.log('============================================');
 });
 
+
+
 // metodos  GET ,POST, PUT , DELETE
 app.get('/distritos',(req,res)=>{
+  const { pagina = 1, limite = 1} = req.query;
+  const offset = (pagina - 1) * limite;
   //let sql ='SELECT * from Distritos';}
-  let sql ='CALL splistardistritos();';
+  const sql = `SELECT * FROM Distritos LIMIT ${limite} OFFSET ${offset}`;
   db.query(sql,(err,results)=>{
     if (err){
       res.status(500).send(err);
@@ -59,8 +63,10 @@ app.get('/estados', (req, res) => {
     }
 });
 });
-/* clientes */
-app.get('/clientes', (req, res) => {
+/* 
+clientes 
+*/
+app.get('/clientes', (resq, res) => {
   let clientes = [];
   let clienteAct = null;
   let sql = 'CALL splistaclientes()';
