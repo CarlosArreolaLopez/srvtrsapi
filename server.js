@@ -35,144 +35,285 @@ db.connect((err) => {
   console.log('=== Servidor MySQL connected...          ===');
   console.log('============================================');
 });
+/*========================================0 */
+// ListarClientes
+app.post('/clientes', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
 
-
-
-// metodos  GET ,POST, PUT , DELETE
-app.get('/distritos',(req,res)=>{
-  const { pagina = 1, limite = 1} = req.query;
-  const offset = (pagina - 1) * limite;
-  //let sql ='SELECT * from Distritos';}
-  const sql = `SELECT * FROM Distritos LIMIT ${limite} OFFSET ${offset}`;
-  db.query(sql,(err,results)=>{
-    if (err){
-      res.status(500).send(err);
-           } else{
-      res.json(results);
-    }
-  });
-});
-/* estados */
-app.get('/estados', (req, res) => {
-  let sql = 'CALL spListarestados()';
-  db.query(sql,(err,results)=> {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.json(results);
-    }
-});
-});
-/* 
-clientes 
-*/
-app.get('/clientes', (resq, res) => {
-  let clientes = [];
-  let clienteAct = null;
-  let sql = 'CALL splistaclientes()';
-  db.query(sql, (err, results) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      results[0].forEach(row => {
-        // Si es un nuevo cliente 
-        if (!clienteAct || clienteAct.cteID !== row.cteID) {
-          if (clienteAct) {
-            clientes.push(clienteAct);
-          }
-          //
-          clienteAct = {
-            cteID: row.cteID,
-            ctedomid: row.cteDomId,
-            ctenombre: row.cteNombre,
-            ctecorreo: row.cteCorreoElectronico,
-            ctetelefono: row.cteTelefono,
-            gerente: [],
-            ejecutivo: [],
-            grupo: [],
-            asesor: [],
-            supervisor: [],
-            domicilios: [],
-          };
-        }
-        clienteAct.domicilios.push({
-          domid: row.DomId,
-          domcalle: row.DomCalle,
-          domcolonia: row.DomColonia,
-          domcpostal: row.DomCpostal,
-          domciudad: row.DomCiudad,
-        });
-           // ejecutivo
-           if (clienteAct.ejecutivo.length == 0) {
-            clienteAct.ejecutivo.push({
-              ejeid: row.cteEjeId,
-              ejenombre: row.ejeNombre,
-              ejecorreo: row.ejeCorreo,
-              ejetelefono: row.ejeTelefono,
-            });
-          }
-        if (clienteAct.gerente.length == 0) {
-          clienteAct.gerente.push({
-            gerid: row.cteGerId,
-            gernombre: row.gerNombre,
-            gercorreo: row.gerCorreo,
-            gertelefono: row.gerTelefono,
-
-          });
-        }
-         // grupo
-         if (clienteAct.grupo.length == 0) {
-          clienteAct.grupo.push({
-            gpoid: row.cteGpoId,
-            gponombre: row.gpoNombre,             
-            gpoestatus: row.gpoEstatus,
-          });
-        }
-         // asesor
-         if (clienteAct.asesor.length == 0) {
-          clienteAct.asesor.push({
-            aseid: row.cteAseId,
-            asenombre: row.aseNombre,
-            asetelefono: row.aseTelefono,
-            asecorreo: row.aseCorreo,
-            aseestatus: row.aseEstatus,
-          });
-        }
-        // supervisor
-        if (clienteAct.supervisor.length == 0) {
-          clienteAct.supervisor.push({
-            supid: row.cteSupId,
-            supnombre: row.supNombre,
-            suptelefono: row.supTelefono,
-            supCorreo: row.supCorreo,
-            supestatus: row.supEstatus,
-          });
-        }
-     
-
-      });
-
-
-
-      // 
-      if (clienteAct) {
-        clientes.push(clienteAct);
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarClientes(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
       }
 
-      res.json(clientes);
-    }
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
   });
 });
-// domiiclios
-app.get('/domicilios', (req, res) => {
-  let sql = 'CALL splistardomicilios()';
-  db.query(sql,(err,results)=> {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.json(results);
-    }
+//Obtener cliente por Id
+app.post('/cliente', (req, res) => {
+  const {id } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spObtenerCliente(?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
 });
+//Agregar cliente
+app.post('/addcliente', (req, res) => {
+  const {nombre,rfc,domicilio,tipo} = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere nombre,rfc, domicilio y tipo' });  }
+  // Llama al procedimiento almacenado
+  const query = 'CALL spInsertarCliente(?,?,?,?)';
+  db.query(query, [nombre,rfc,domicilio,tipo], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }     
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+//Actualizar cliente 
+app.post('/updcliente', (req, res) => {
+  const {id,nombre,rfc,domicilio,tipo} = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spActualzarCliente(?,?,?,?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Domicilios
+app.post('/domicilios', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarDomicilios(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+
+
+/*========================================*/
+
+// Metodos 
+app.post('/distritos', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarDistritos(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+
+// Conductores
+app.post('/conductores', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarConductores(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Empleados por pagina 
+app.post('/empleadosxpag', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarEmpleadosxpag(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+app.post('/empleados', (req, res) => {   
+    // Llama al procedimiento almacenado
+    const query = 'CALL splistarempleados';
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error al ejecutar el procedimiento almacenado:', err);
+            return res.status(500).json({ error: 'Error en la consulta' });
+        }
+  
+        // Devuelve los resultados en formato JSON
+        res.json(results[0]); // Los resultados están en la primera posición del array
+    });
+  });
+// Estados
+app.post('/estados', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarEstados(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Sucursales
+app.post('/sucursales', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarSucursales(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Tarifa
+app.post('/tarifa', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarTarifas(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Tipos Viaje
+app.post('/tiposviaje', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarTiposviaje(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Viajes
+app.post('/viajes', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarViajes(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
+});
+// Vehiculos
+app.post('/vehiculos', (req, res) => {
+  const { pagina, limite } = req.body;
+  // Valida los parámetros
+  if (!pagina || !limite) {
+      return res.status(400).json({ error: 'Se requiere "pagina" y "limite"' });  }
+
+  // Llama al procedimiento almacenado
+  const query = 'CALL spListarVehiculos(?, ?)';
+  db.query(query, [pagina, limite], (err, results) => {
+      if (err) {
+          console.error('Error al ejecutar el procedimiento almacenado:', err);
+          return res.status(500).json({ error: 'Error en la consulta' });
+      }
+
+      // Devuelve los resultados en formato JSON
+      res.json(results[0]); // Los resultados están en la primera posición del array
+  });
 });
 
 app.listen(4001, () => {
